@@ -20,21 +20,27 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle
+      - name: Setup Gradle 8.6
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: '8.5'
+          gradle-version: '8.6'
 
       - name: Accept Android SDK Licenses
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Build Debug APK with Gradle
+      - name: Build Debug APK with Gradle 8.6
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
           cd android
-          gradle assembleDebug --no-daemon --stacktrace
+          gradle wrapper --gradle-version 8.6 --distribution-type bin
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Verify APK Generated
+        run: |
+          ls -la android/app/build/outputs/apk/debug/
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
@@ -42,3 +48,12 @@ jobs:
           name: DigitalBookLibrary-Debug-APK
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Upload Build Reports if Failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-failure-reports
+          path: |
+            android/app/build/reports/
+          if-no-files-found: ignore

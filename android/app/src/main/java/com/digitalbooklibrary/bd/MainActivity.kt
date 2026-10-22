@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Person
@@ -23,7 +23,7 @@ import androidx.navigation.compose.rememberNavController
 
 sealed class Screen(val route: String, val titleBn: String, val icon: ImageVector) {
     object Home : Screen("home", "হোম", Icons.Default.Home)
-    object Books : Screen("books", "বইসমূহ", Icons.Default.List)
+    object Books : Screen("books", "বইসমূহ", Icons.Default.Menu)
     object Search : Screen("search", "অনুসন্ধান", Icons.Default.Search)
     object Library : Screen("library", "লাইব্রেরি", Icons.Default.Star)
     object Admin : Screen("admin", "অ্যাডমিন", Icons.Default.Person)
@@ -77,8 +77,11 @@ fun MainAppNavHost() {
                         selected = currentRoute == screen.route,
                         onClick = {
                             navController.navigate(screen.route) {
-                                popUpTo(navController.graph.startDestinationId)
+                                popUpTo(Screen.Home.route) {
+                                    saveState = true
+                                }
                                 launchSingleTop = true
+                                restoreState = true
                             }
                         }
                     )
