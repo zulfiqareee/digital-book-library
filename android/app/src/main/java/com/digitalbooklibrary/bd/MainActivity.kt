@@ -5,19 +5,28 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.compose.*
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 
 sealed class Screen(val route: String, val titleBn: String, val icon: ImageVector) {
     object Home : Screen("home", "হোম", Icons.Default.Home)
-    object Books : Screen("books", "বইসমূহ", Icons.Default.MenuBook)
+    object Books : Screen("books", "বইসমূহ", Icons.Default.List)
     object Search : Screen("search", "অনুসন্ধান", Icons.Default.Search)
-    object Library : Screen("library", "লাইব্রেরি", Icons.Default.CollectionsBookmark)
-    object Admin : Screen("admin", "অ্যাডমিন", Icons.Default.AdminPanelSettings)
+    object Library : Screen("library", "লাইব্রেরি", Icons.Default.Star)
+    object Admin : Screen("admin", "অ্যাডমিন", Icons.Default.Person)
 }
 
 class MainActivity : ComponentActivity() {
@@ -83,19 +92,44 @@ fun MainAppNavHost() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Home.route) {
-                // Compose HomeScreen with featured books, categories, and free reader
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("স্বাগতম ডিজিটাল বই লাইব্রেরি বাংলাদেশে!", style = MaterialTheme.typography.bodyLarge)
+                }
             }
             composable(Screen.Books.route) {
-                // Compose AllBooksScreen with search and filter
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("সকল প্রকাশিত বইসমূহ", style = MaterialTheme.typography.bodyLarge)
+                }
             }
             composable(Screen.Search.route) {
-                // Search Screen
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("বই অনুসন্ধান করুন", style = MaterialTheme.typography.bodyLarge)
+                }
             }
             composable(Screen.Library.route) {
-                // User Library & Downloaded PDFs
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("আমার ব্যক্তিগত লাইব্রেরি", style = MaterialTheme.typography.bodyLarge)
+                }
             }
             composable(Screen.Admin.route) {
-                // Admin Dashboard & Book Upload
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("প্রশাসক নিয়ন্ত্রণ কেন্দ্র", style = MaterialTheme.typography.bodyLarge)
+                }
             }
         }
     }
@@ -105,7 +139,7 @@ fun MainAppNavHost() {
 fun DigitalBookLibraryTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = darkColorScheme(
-            primary = androidx.compose.ui.graphics.Color(0xFFE2136E), // bKash brand pink
+            primary = androidx.compose.ui.graphics.Color(0xFFE2136E),
             primaryContainer = androidx.compose.ui.graphics.Color(0xFF3B0B1E),
             secondary = androidx.compose.ui.graphics.Color(0xFF0F766E),
             background = androidx.compose.ui.graphics.Color(0xFF0F172A),
