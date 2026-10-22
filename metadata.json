@@ -1,0 +1,6 @@
+{
+  "name": "Digital Book Library - ডিজিটাল বই লাইব্রেরি",
+  "description": "Bengali-first digital book reading and selling platform for Bangladesh. Read free online, pay securely with bKash to download original PDFs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

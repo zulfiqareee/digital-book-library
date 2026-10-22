@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e2136e"/>
+      <stop offset="100%" stop-color="#fb7185"/>
+    </linearGradient>
+    <linearGradient id="pages" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  
+  <!-- Outer subtle glow -->
+  <rect x="24" y="24" width="464" height="464" rx="90" fill="none" stroke="#e2136e" stroke-opacity="0.3" stroke-width="4"/>
+
+  <!-- Open Book Symbol -->
+  <g transform="translate(76, 116)">
+    <!-- Left Page Base -->
+    <path d="M180,60 C130,50 60,60 10,75 L10,270 C60,255 130,245 180,255 Z" fill="#334155" opacity="0.6"/>
+    <!-- Right Page Base -->
+    <path d="M180,60 C230,50 300,60 350,75 L350,270 C300,255 230,245 180,255 Z" fill="#334155" opacity="0.6"/>
+
+    <!-- Left Main Page -->
+    <path d="M180,45 C130,35 60,45 10,60 L10,250 C60,235 130,225 180,238 Z" fill="url(#pages)"/>
+    
+    <!-- Right Main Page -->
+    <path d="M180,45 C230,35 300,45 350,60 L350,250 C300,235 230,225 180,238 Z" fill="url(#pages)"/>
+
+    <!-- Center Spine / Bookmark Ribbon -->
+    <path d="M172,30 L188,30 L188,260 L180,250 L172,260 Z" fill="url(#accent)"/>
+
+    <!-- Reading Text Lines Left -->
+    <line x1="45" y1="95" x2="145" y2="90" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+    <line x1="45" y1="125" x2="145" y2="120" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+    <line x1="45" y1="155" x2="130" y2="150" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+    <line x1="45" y1="185" x2="145" y2="180" stroke="#e2136e" stroke-width="8" stroke-linecap="round"/>
+
+    <!-- Reading Text Lines Right -->
+    <line x1="215" y1="90" x2="315" y2="95" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+    <line x1="215" y1="120" x2="315" y2="125" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+    <line x1="215" y1="150" x2="300" y2="155" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+    <line x1="215" y1="180" x2="280" y2="185" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <!-- Glowing Digital Shield / Sparkle -->
+  <circle cx="410" cy="110" r="14" fill="#fb7185"/>
+  <circle cx="102" cy="100" r="8" fill="#e2136e"/>
+</svg>

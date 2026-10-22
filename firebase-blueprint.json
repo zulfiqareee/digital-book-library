@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "Book": {
+      "title": "Book",
+      "description": "Book metadata for the digital library",
+      "type": "object",
+      "properties": {
+        "titleBn": { "type": "string", "maxLength": 300 },
+        "titleEn": { "type": "string", "maxLength": 300 },
+        "authorBn": { "type": "string", "maxLength": 150 },
+        "authorEn": { "type": "string", "maxLength": 150 },
+        "category": { "type": "string", "maxLength": 100 },
+        "categoryBn": { "type": "string", "maxLength": 100 },
+        "descriptionBn": { "type": "string", "maxLength": 5000 },
+        "descriptionEn": { "type": "string", "maxLength": 5000 },
+        "language": { "type": "string", "enum": ["Bengali", "English", "Dual"] },
+        "priceBDT": { "type": "number" },
+        "coverImage": { "type": "string", "maxLength": 1000 },
+        "isPublished": { "type": "boolean" },
+        "pagesCount": { "type": "number" },
+        "publishedYear": { "type": "number" },
+        "rating": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["titleBn", "authorBn", "priceBDT", "isPublished", "categoryBn"]
+    },
+    "PurchaseRecord": {
+      "title": "PurchaseRecord",
+      "description": "Verified bKash purchase record granting PDF download entitlement",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userEmail": { "type": "string", "format": "email", "maxLength": 254 },
+        "bookId": { "type": "string", "maxLength": 128 },
+        "bookTitleBn": { "type": "string", "maxLength": 300 },
+        "amountBDT": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["bKash"] },
+        "paymentTrxId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["COMPLETED", "PENDING", "FAILED", "CANCELLED"] },
+        "verifiedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orderId", "userId", "bookId", "amountBDT", "status", "paymentMethod"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with role and preferences",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string", "maxLength": 150 },
+        "email": { "type": "string", "format": "email", "maxLength": 254 },
+        "role": { "type": "string", "enum": ["reader", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Server-authorized administrator entity",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email", "maxLength": 254 },
+        "addedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email"]
+    }
+  },
+  "firestore": {
+    "/books/{bookId}": {
+      "schema": { "$ref": "#/entities/Book" },
+      "description": "Public book catalogue and metadata"
+    },
+    "/purchases/{purchaseId}": {
+      "schema": { "$ref": "#/entities/PurchaseRecord" },
+      "description": "Verified bKash purchases with download entitlements"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile data"
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "List of authorized administrator accounts"
+    }
+  }
+}
