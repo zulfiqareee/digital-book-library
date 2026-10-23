@@ -8,13 +8,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -22,11 +23,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 
 sealed class Screen(val route: String, val titleBn: String, val icon: ImageVector) {
-    object Home : Screen("home", "হোম", Icons.Default.Home)
-    object Books : Screen("books", "বইসমূহ", Icons.Default.Menu)
-    object Search : Screen("search", "অনুসন্ধান", Icons.Default.Search)
-    object Library : Screen("library", "লাইব্রেরি", Icons.Default.Star)
-    object Admin : Screen("admin", "অ্যাডমিন", Icons.Default.Person)
+    data object Home : Screen("home", "হোম", Icons.Default.Home)
+    data object Books : Screen("books", "বইসমূহ", Icons.Default.Menu)
+    data object Search : Screen("search", "অনুসন্ধান", Icons.Default.Search)
+    data object Library : Screen("library", "লাইব্রেরি", Icons.Default.Favorite)
+    data object Admin : Screen("admin", "অ্যাডমিন", Icons.Default.AccountBox)
 }
 
 class MainActivity : ComponentActivity() {
@@ -142,11 +143,11 @@ fun MainAppNavHost() {
 fun DigitalBookLibraryTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = darkColorScheme(
-            primary = androidx.compose.ui.graphics.Color(0xFFE2136E),
-            primaryContainer = androidx.compose.ui.graphics.Color(0xFF3B0B1E),
-            secondary = androidx.compose.ui.graphics.Color(0xFF0F766E),
-            background = androidx.compose.ui.graphics.Color(0xFF0F172A),
-            surface = androidx.compose.ui.graphics.Color(0xFF1E293B)
+            primary = Color(0xFFE2136EL),
+            primaryContainer = Color(0xFF3B0B1EL),
+            secondary = Color(0xFF0F766EL),
+            background = Color(0xFF0F172AL),
+            surface = Color(0xFF1E293BL)
         ),
         content = content
     )
