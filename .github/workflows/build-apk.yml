@@ -31,9 +31,9 @@ jobs:
 
       - name: Accept Android SDK Licenses
         run: |
-          mkdir -p "$ANDROID_HOME/licenses"
-          echo -e "24333f8a63b6825ea9c5514f83c2829b004d1fee\nd975444a217f91018b14e00464554b7d5ea21372\n84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-license" || true
-          echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license" || true
+          sudo mkdir -p "$ANDROID_HOME/licenses"
+          printf "24333f8a63b6825ea9c5514f83c2829b004d1fee\nd975444a217f91018b14e00464554b7d5ea21372\n84831b9409646a918e30573bab4c9c91346d8abd\n" | sudo tee "$ANDROID_HOME/licenses/android-sdk-license" > /dev/null || true
+          printf "84831b9409646a918e30573bab4c9c91346d8abd\n" | sudo tee "$ANDROID_HOME/licenses/android-sdk-preview-license" > /dev/null || true
           if [ -d "$ANDROID_HOME/cmdline-tools/latest/bin" ]; then
             yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
           fi
@@ -44,16 +44,31 @@ jobs:
           echo "sdk.dir=/usr/local/lib/android/sdk" > local.properties
           gradle assembleDebug --no-daemon --stacktrace
 
+      - name: Build Release Bundle (AAB) for Google Play
+        working-directory: android
+        continue-on-error: true
+        run: |
+          gradle bundleRelease --no-daemon || true
+
       - name: Verify APK Generated
         run: |
           ls -la android/app/build/outputs/apk/debug/
 
-      - name: Upload APK Artifact
+      - name: Upload APK Artifact (Direct Phone Install)
         uses: actions/upload-artifact@v4
         with:
           name: DigitalBookLibrary-Debug-APK
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Release AAB Artifact (Google Play Bundle)
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: DigitalBookLibrary-Release-AAB
+          path: android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: ignore
           retention-days: 14
 
       - name: Upload Build Reports if Failed

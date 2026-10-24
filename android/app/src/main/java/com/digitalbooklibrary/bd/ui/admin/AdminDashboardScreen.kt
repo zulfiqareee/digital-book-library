@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -726,7 +727,7 @@ fun BookUploadDialog(
                     }
                 }
 
-                Divider(modifier = Modifier.padding(vertical = 12.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 // Scrollable Form Fields
                 Column(
@@ -912,7 +913,7 @@ fun BookUploadDialog(
                     )
                 }
 
-                Divider(modifier = Modifier.padding(vertical = 12.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 // Actions: Publish Now or Save Draft
                 Row(
@@ -1036,7 +1037,7 @@ fun BookEditDialog(
                     }
                 }
 
-                Divider(modifier = Modifier.padding(vertical = 12.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 Column(
                     modifier = Modifier
@@ -1117,7 +1118,7 @@ fun BookEditDialog(
                     }
                 }
 
-                Divider(modifier = Modifier.padding(vertical = 12.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1182,7 +1183,7 @@ fun getFileNameAndSize(context: Context, uri: Uri): Pair<String, Long> {
                 }
             }
         }
-    } catch (_: Exception) {}
+    } catch (e: Exception) {}
     return Pair(name, size)
 }
 
@@ -1203,7 +1204,7 @@ fun readUriToBase64(context: Context, uri: Uri): String? {
             val bytes = stream.readBytes()
             Base64.encodeToString(bytes, Base64.NO_WRAP)
         }
-    } catch (_: Exception) {
+    } catch (e: Exception) {
         null
     }
 }

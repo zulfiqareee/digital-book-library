@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -69,7 +70,7 @@ export interface PurchaseRecord {
 }
 
 // Initial Bengali-first books catalogue with authentic literature & modern themes
-const booksDatabase: Map<string, Book> = new Map([
+const initialSeedBooks: Array<[string, Book]> = [
   [
     'book-1',
     {
@@ -271,10 +272,10 @@ const booksDatabase: Map<string, Book> = new Map([
       updatedAt: '2025-03-05T16:00:00Z'
     }
   ]
-]);
+];
 
-// Verified purchases storage (In-memory + synced)
-const purchasesDatabase: Map<string, PurchaseRecord> = new Map([
+// Initial verified purchases storage seed
+const initialSeedPurchases: Array<[string, PurchaseRecord]> = [
   [
     'purch-seed-1',
     {
@@ -297,7 +298,93 @@ const purchasesDatabase: Map<string, PurchaseRecord> = new Map([
       }
     }
   ]
-]);
+];
+
+// ----------------------------------------------------------------------------
+// PERSISTENT FILE SYSTEM STORAGE HELPERS
+// ----------------------------------------------------------------------------
+const DATA_DIR = path.resolve(__dirname, 'data');
+const BOOKS_FILE = path.join(DATA_DIR, 'books.json');
+const PURCHASES_FILE = path.join(DATA_DIR, 'purchases.json');
+const VAULT_DIR = path.join(DATA_DIR, 'vault');
+
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  if (!fs.existsSync(VAULT_DIR)) {
+    fs.mkdirSync(VAULT_DIR, { recursive: true });
+  }
+} catch (e) {
+  console.error('Error creating data directory:', e);
+}
+
+function loadPersistedBooks(): Map<string, Book> {
+  const map = new Map<string, Book>();
+  if (fs.existsSync(BOOKS_FILE)) {
+    try {
+      const data = fs.readFileSync(BOOKS_FILE, 'utf-8');
+      const parsed: Book[] = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        for (const b of parsed) {
+          map.set(b.id, b);
+        }
+        return map;
+      }
+    } catch (e) {
+      console.error('Error loading books.json:', e);
+    }
+  }
+  for (const [id, book] of initialSeedBooks) {
+    map.set(id, book);
+  }
+  saveBooksToDisk(map);
+  return map;
+}
+
+function saveBooksToDisk(map: Map<string, Book>) {
+  try {
+    const list = Array.from(map.values());
+    fs.writeFileSync(BOOKS_FILE, JSON.stringify(list, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('Error saving books.json:', e);
+  }
+}
+
+function loadPersistedPurchases(): Map<string, PurchaseRecord> {
+  const map = new Map<string, PurchaseRecord>();
+  if (fs.existsSync(PURCHASES_FILE)) {
+    try {
+      const data = fs.readFileSync(PURCHASES_FILE, 'utf-8');
+      const parsed: PurchaseRecord[] = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        for (const p of parsed) {
+          map.set(p.id, p);
+        }
+        return map;
+      }
+    } catch (e) {
+      console.error('Error loading purchases.json:', e);
+    }
+  }
+  for (const [id, record] of initialSeedPurchases) {
+    map.set(id, record);
+  }
+  savePurchasesToDisk(map);
+  return map;
+}
+
+function savePurchasesToDisk(map: Map<string, PurchaseRecord>) {
+  try {
+    const list = Array.from(map.values());
+    fs.writeFileSync(PURCHASES_FILE, JSON.stringify(list, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('Error saving purchases.json:', e);
+  }
+}
+
+const booksDatabase: Map<string, Book> = loadPersistedBooks();
+const purchasesDatabase: Map<string, PurchaseRecord> = loadPersistedPurchases();
 
 // Active download tokens: token -> { bookId, userId, expiresAt }
 const activeDownloadTokens: Map<string, { bookId: string; userId: string; expiresAt: number }> = new Map();
@@ -589,6 +676,7 @@ app.post('/api/bkash/execute-payment', async (req: Request, res: Response) => {
   };
 
   purchasesDatabase.set(paymentID, record);
+  savePurchasesToDisk(purchasesDatabase);
 
   res.json({
     success: true,
@@ -728,6 +816,20 @@ app.get('/api/books/download/:token', (req: Request, res: Response) => {
   // Generate authentic PDF buffer content with watermarked licensing info
   const sanitizedTitle = book.titleEn.replace(/[^a-zA-Z0-9_-]/g, '_');
   const filename = `${sanitizedTitle}-DigitalBookLibrary-Licensed.pdf`;
+
+  // Check if genuine PDF uploaded by Admin exists in Vault storage
+  if (book.pdfStorageKey) {
+    const rawKey = book.pdfStorageKey.replace(/^private-vault\/books\//, '');
+    const vaultPath = path.join(VAULT_DIR, rawKey);
+    if (fs.existsSync(vaultPath)) {
+      const stat = fs.statSync(vaultPath);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Length', stat.size);
+      const fileStream = fs.createReadStream(vaultPath);
+      return fileStream.pipe(res);
+    }
+  }
 
   // Create real PDF file bytes with header and content
   const pdfContent = `%PDF-1.4
@@ -887,6 +989,22 @@ app.post('/api/admin/books', requireAdmin, (req: Request, res: Response) => {
   const id = `book-${Date.now()}`;
   const now = new Date().toISOString();
 
+  // Save uploaded PDF file to Vault if provided as Base64 buffer
+  let savedStorageKey = `vault-${id}.pdf`;
+  if (pdfDataBuffer && typeof pdfDataBuffer === 'string' && pdfDataBuffer.length > 50) {
+    try {
+      const cleanBase64 = pdfDataBuffer.replace(/^data:application\/pdf;base64,/, '');
+      const buffer = Buffer.from(cleanBase64, 'base64');
+      const safeFilename = `${id}-${(pdfFileName || 'document.pdf').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      fs.writeFileSync(path.join(VAULT_DIR, safeFilename), buffer);
+      savedStorageKey = safeFilename;
+    } catch (err) {
+      console.error('Error saving uploaded PDF file to vault:', err);
+    }
+  } else if (pdfFileName) {
+    savedStorageKey = `${id}-${pdfFileName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+  }
+
   const newBook: Book = {
     id,
     titleBn: titleBn.trim(),
@@ -918,12 +1036,13 @@ app.post('/api/admin/books', requireAdmin, (req: Request, res: Response) => {
         contentBn: descriptionBn || 'বইটির বিস্তারিত আলোচনা এবং বিশ্লেষণ।'
       }
     ],
-    pdfStorageKey: `private-vault/books/${id}-${pdfFileName || 'document.pdf'}`,
+    pdfStorageKey: savedStorageKey,
     createdAt: now,
     updatedAt: now
   };
 
   booksDatabase.set(id, newBook);
+  saveBooksToDisk(booksDatabase);
 
   res.json({
     success: true,
@@ -967,6 +1086,7 @@ app.put('/api/admin/books/:id', requireAdmin, (req: Request, res: Response) => {
 
   book.updatedAt = new Date().toISOString();
   booksDatabase.set(id, book);
+  saveBooksToDisk(booksDatabase);
 
   res.json({
     success: true,
@@ -978,15 +1098,85 @@ app.put('/api/admin/books/:id', requireAdmin, (req: Request, res: Response) => {
 // 16. Admin Delete Book
 app.delete('/api/admin/books/:id', requireAdmin, (req: Request, res: Response) => {
   const { id } = req.params;
-  if (!booksDatabase.has(id)) {
+  const book = booksDatabase.get(id);
+  if (!book) {
     return res.status(404).json({ success: false, error: 'বই পাওয়া যায়নি।' });
   }
 
+  if (book.pdfStorageKey) {
+    try {
+      const rawKey = book.pdfStorageKey.replace(/^private-vault\/books\//, '');
+      const filePath = path.join(VAULT_DIR, rawKey);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (e) {
+      console.error('Error removing file on delete:', e);
+    }
+  }
+
   booksDatabase.delete(id);
+  saveBooksToDisk(booksDatabase);
+
   res.json({
     success: true,
     message: 'বইটি সফলভাবে মুছে ফেলা হয়েছে।'
   });
+});
+
+// 17. Legal, Privacy & Terms Endpoints for Google Play Release Compliance
+app.get('/privacy-policy', (_req: Request, res: Response) => {
+  res.send(`<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>গোপনীয়তা নীতি - Privacy Policy | Digital Book Library BD</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #1e293b; background: #f8fafc; }
+    h1, h2 { color: #0f172a; }
+    .card { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    code { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>গোপনীয়তা নীতি (Privacy Policy)</h1>
+    <p><strong>ডিজিটাল বই লাইব্রেরি (Digital Book Library BD)</strong></p>
+    <p>সর্বশেষ হালনাগাদ: ২০২৬</p>
+    <h2>১. তথ্য সংগ্রহ ও ব্যবহার</h2>
+    <p>আমরা ব্যবহারকারীদের গোপনীয়তাকে সর্বোচ্চ অগ্রাধিকার প্রদান করি। অ্যাপটি বিনামূল্যে অনলাইন রিডিং সেবা প্রদানের জন্য কোনো অপ্রয়োজনীয় ব্যক্তিগত তথ্য সংগ্রহ করে না। শুধুমাত্র বই ক্রয় বা পিডিএফ ডাউনলোডের ক্ষেত্রে বিকাশ পেমেন্ট ট্রানজ্যাকশন আইডি ও মৌলিক তথ্য সংগ্রহ করা হয়।</p>
+    <h2>২. তথ্য সুরক্ষা ও নিরাপত্তা</h2>
+    <p>সমস্ত যোগাযোগ SSL এনক্রিপশনের মাধ্যমে নিরাপদ রাখা হয়। কোনো পাসওয়ার্ড বা স্পর্শকাতর পেমেন্ট তথ্য আমাদের সার্ভারে সংরক্ষিত থাকে না।</p>
+    <h2>৩. ডেটা মুছে ফেলার অধিকার (Data Deletion)</h2>
+    <p>ব্যবহারকারী যেকোনো সময় তাদের অ্যাকাউন্ট বা তথ্য মুছে ফেলার অনুরোধ করতে পারেন: <code>zulfiqar1hasan@gmail.com</code>-এ ইমেইল করে।</p>
+    <h2>৪. যোগাযোগ</h2>
+    <p>যেকোনো প্রশ্ন বা সহায়তার জন্য যোগাযোগ করুন: <code>zulfiqar1hasan@gmail.com</code></p>
+  </div>
+</body>
+</html>`);
+});
+
+app.get('/terms', (_req: Request, res: Response) => {
+  res.send(`<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ব্যবহারের শর্তাবলী - Terms of Service | Digital Book Library BD</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #1e293b; background: #f8fafc; }
+    h1, h2 { color: #0f172a; }
+    .card { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>ব্যবহারের শর্তাবলী (Terms of Service)</h1>
+    <p>ডিজিটাল বই লাইব্রেরি প্ল্যাটফর্মের বইসমূহ কেবল ব্যক্তিগত অধ্যয়নের জন্য। অননুমোদিত বাণিজ্যিক পুনঃউৎপাদন বা বিতরণ নিষিদ্ধ।</p>
+  </div>
+</body>
+</html>`);
 });
 
 // ----------------------------------------------------------------------------

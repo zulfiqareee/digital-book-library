@@ -85,7 +85,7 @@ object BookRepository {
                     return@withContext Result.success(metrics)
                 }
             }
-        } catch (_: Exception) { }
+        } catch (e: Exception) { }
 
         // Fallback calculation from local data
         val total = localBooks.size
@@ -120,7 +120,7 @@ object BookRepository {
                     return@withContext Result.success(createdBook)
                 }
             }
-        } catch (_: Exception) { }
+        } catch (e: Exception) { }
 
         // Fallback local persistence so user never loses state
         val fallbackBook = Book(
@@ -163,7 +163,7 @@ object BookRepository {
                     return@withContext Result.success(updatedBook)
                 }
             }
-        } catch (_: Exception) { }
+        } catch (e: Exception) { }
 
         // Fallback update local state
         synchronized(localBooks) {
@@ -201,7 +201,7 @@ object BookRepository {
                 }
                 return@withContext Result.success(true)
             }
-        } catch (_: Exception) { }
+        } catch (e: Exception) { }
 
         // Local deletion
         synchronized(localBooks) {
